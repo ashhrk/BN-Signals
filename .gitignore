@@ -1,0 +1,20 @@
+# credentials — NEVER commit these
+.env
+
+# dependencies
+node_modules/
+
+# signal logs (personal trading data)
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+
+# temp
+*.log
+npm-debug.log*
