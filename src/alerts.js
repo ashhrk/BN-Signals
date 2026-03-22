@@ -28,36 +28,44 @@ export async function sendTelegramAlert(signal) {
     `${signal.checklist.notInNoTradeZone         ? '✅' : '❌'} Not in no-trade time zone`,
   ].join('\n') : 'N/A';
 
+  const contract  = signal.optionSuggestion?.contractName ?? null;
+  const premium   = signal.optionSuggestion?.estimatedPremium ?? null;
+
   const msg = [
-    `${e} *BANKNIFTY ${signal.signal}* ${e}`,
+    // ── HEADLINE ────────────────────────────────────────────────────────────
+    contract
+      ? `${e} *${contract}* ${e}`
+      : `${e} *BANKNIFTY ${signal.signal}* ${e}`,
+    contract ? `*Action: ${signal.signal} THIS CONTRACT*` : '',
+    premium  ? `💵 *Est. Premium:* ${premium}` : '',
     ``,
-    `💰 *Price:* ₹${fmt(signal.price)}`,
-    `🎯 *Confidence:* ${signal.confidence}%`,
-    `📋 *Entry Type:* ${signal.entryType ?? 'N/A'}`,
-    `📍 *Triggering Level:* ${signal.triggeringLevel ?? 'N/A'}`,
-    `⏱ *Timeframe:* ${signal.timeframe}`,
-    ``,
-    signal.optionSuggestion?.type ? `🎯 *Option:* ${signal.optionSuggestion.type} ${signal.optionSuggestion.strikePrice?.toLocaleString('en-IN')} (${signal.optionSuggestion.rationale})` : null,
-    signal.entry    ? `📍 *Entry:*    ₹${fmt(signal.entry)}`    : null,
-    signal.target   ? `🎯 *Target:*   ₹${fmt(signal.target)}`   : null,
+    // ── TRADE LEVELS ────────────────────────────────────────────────────────
+    `💰 *Index Spot:* ₹${fmt(signal.price)}   |   *Confidence:* ${signal.confidence}%`,
+    signal.entry    ? `📍 *Entry:*     ₹${fmt(signal.entry)}`    : null,
+    signal.target   ? `🎯 *Target:*    ₹${fmt(signal.target)}`   : null,
     signal.stopLoss ? `🛑 *Stop Loss:* ₹${fmt(signal.stopLoss)}` : null,
-    signal.rrRatio  ? `📊 *R:R:* ${signal.rrRatio}` : null,
+    signal.rrRatio  ? `📊 *R:R Ratio:* ${signal.rrRatio}` : null,
     ``,
+    // ── WHY THIS TRADE ──────────────────────────────────────────────────────
+    `📋 *Entry Type:* ${signal.entryType ?? 'N/A'} — ${signal.triggeringLevel ?? 'N/A'}`,
+    `⏱  *Timeframe:* ${signal.timeframe}`,
+    signal.optionSuggestion?.rationale ? `💡 *Strike Logic:* ${signal.optionSuggestion.rationale}` : null,
+    ``,
+    `📝 *Technical Analysis:*`,
+    signal.reasoning,
+    ``,
+    `⚠️ *Key Risk:* ${signal.keyRisks}`,
+    ``,
+    // ── CHECKLIST ───────────────────────────────────────────────────────────
     `*7-Point Checklist:* ${scoreBar} ${score}/7`,
     checklistLines,
     ``,
-    `📝 *Analysis:*`,
-    signal.reasoning,
-    ``,
-    `⚠️ *Risk:* ${signal.keyRisks}`,
-    ``,
     `🕐 ${new Date(signal.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`,
-    ``,
-    `_⚠ Educational purposes only. Not financial advice._`,
+    `_⚠ Educational only. Not financial advice._`,
   ].filter((l) => l !== null).join('\n');
 
   await b.sendMessage(process.env.TELEGRAM_CHAT_ID, msg, { parse_mode: 'Markdown' });
-  console.log(`[Telegram] Sent: ${signal.signal} @ ₹${signal.price}`);
+  console.log(`[Telegram] Sent: ${contract ?? signal.signal} @ ₹${signal.price}`);
 }
 
 // ── Trade journal logger (Pillar 6) ─────────────────────────────────────────

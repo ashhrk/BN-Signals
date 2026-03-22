@@ -58,9 +58,12 @@ Respond ONLY with this exact JSON (no markdown, no extra text):
   "rrRatio": "<e.g. 1:2.3>",
   "timeframe": "scalp (5-15 min)" | "intraday (30-60 min)" | "avoid",
   "optionSuggestion": {
+    "contractName": "BANKNIFTY 53400 CE 31MAR26",
     "type": "CE" | "PE" | null,
-    "strikePrice": <nearest 100 ATM or 1 OTM strike, e.g. 48500>,
-    "rationale": "<why this strike, e.g. ATM CE for momentum, 1 OTM PE for cost efficiency>"
+    "strikePrice": <nearest 100 ATM or 1 ITM strike>,
+    "expiry": "<DDMMMYY format, e.g. 31MAR26>",
+    "estimatedPremium": "<rough premium range in ₹, e.g. ₹150-180 based on ATM IV>",
+    "rationale": "<1 sentence: why THIS strike and THIS expiry>"
   },
   "checklist": {
     "levelIdentifiedBefore": true | false,
@@ -82,13 +85,20 @@ Respond ONLY with this exact JSON (no markdown, no extra text):
 }
 IMPORTANT: Output BUY or SELL ONLY if checklistScore = 7. Any score < 7 = HOLD.
 
-OPTION SUGGESTION RULES:
-- For BUY signals: suggest CE (Call option). Strike = ATM (round current price to nearest 100).
-- For SELL signals: suggest PE (Put option). Strike = ATM (round current price to nearest 100).
-- If confidence > 80% and momentum is strong: suggest 1 strike ITM for higher delta.
-- If confidence 65-80%: suggest ATM for balanced risk.
-- For HOLD: set optionSuggestion to null.
-- Always explain the strike rationale in 1 sentence.`;
+OPTION CONTRACT RULES (MANDATORY — This is the most important output):
+You MUST name the EXACT NSE contract in this format: BANKNIFTY [STRIKE] [CE/PE] [DDMMMYY]
+Examples: "BANKNIFTY 53400 CE 31MAR26" or "BANKNIFTY 53000 PE 31MAR26"
+
+Strike selection rules:
+- For BUY signals (CE): ATM = round current spot price to nearest 100. If confidence > 80% and strong momentum → go 1 strike ITM (strike = ATM - 100) for maximum delta.
+- For SELL signals (PE): ATM = round current spot price to nearest 100. If confidence > 80% and strong momentum → go 1 strike ITM (strike = ATM + 100) for maximum delta.
+- If confidence 65-80%: use ATM strike.
+- If confidence < 65%: signal must be HOLD.
+
+For HOLD: set optionSuggestion to null.
+
+Always explain in 1 sentence WHY that specific strike and expiry was chosen.`;
+
 
 export async function generateSignal(indicators, optionsData, currentPrice, levels, oiTrend, sessionState) {
   const userMessage = buildPrompt(indicators, optionsData, currentPrice, levels, oiTrend, sessionState);
@@ -121,9 +131,22 @@ function buildPrompt(ind, opt, price, levels, oiTrend, sessionState) {
   const tw = sessionState?.timeWarning;
   const lp = sessionState?.lossProtocol;
 
+  // Compute ATM strike and expiry label for prompt injection
+  const atmStrike = Math.round(price / 100) * 100;
+  const expiryLabel = opt.expiry
+    ? (() => {
+        const d = new Date(opt.expiry);
+        const dd  = String(d.getDate()).padStart(2, '0');
+        const mon = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()];
+        const yy  = String(d.getFullYear()).slice(-2);
+        return `${dd}${mon}${yy}`;
+      })()
+    : 'UNKNOWN';
+
   return `
 BANKNIFTY REAL-TIME ANALYSIS — ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST
-Current Price: ₹${price.toLocaleString('en-IN')} | Candle: ${process.env.CANDLE_INTERVAL || '5minute'}
+Current Spot Price: ₹${price.toLocaleString('en-IN')} | ATM Strike: ${atmStrike} | Candle: ${process.env.CANDLE_INTERVAL || '5minute'}
+Monthly Expiry In Force: ${opt.expiry} (NSE label: ${expiryLabel})
 ${tw?.warning ? `⚠ TIME WARNING: ${tw.warning}` : ''}
 ${lp?.status !== 'OK' ? `🛑 SESSION: ${lp?.message}` : ''}
 

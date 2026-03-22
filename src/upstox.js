@@ -134,24 +134,49 @@ export class UpstoxClient {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getNextExpiry() {
-  // BankNifty weekly expiry = every TUESDAY (day 2)
-  // NSE changed from Thursday to Tuesday in 2023
+  const expiryType = process.env.BANKNIFTY_EXPIRY_TYPE || 'monthly'; // 'monthly' | 'weekly'
   const d = new Date();
   const ist = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const day = ist.getDay(); // 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
 
-  let daysUntilTue = (2 - day + 7) % 7;
-  if (day === 2) {
-    // today IS Tuesday: if market still open use today, otherwise next Tuesday
-    const mins = ist.getHours() * 60 + ist.getMinutes();
-    daysUntilTue = mins <= 15 * 60 + 30 ? 0 : 7;
-  } else {
-    daysUntilTue = daysUntilTue || 7;
+  if (expiryType === 'weekly') {
+    // Weekly = nearest upcoming Tuesday
+    const day = ist.getDay();
+    let daysUntilTue = (2 - day + 7) % 7;
+    if (day === 2) {
+      const mins = ist.getHours() * 60 + ist.getMinutes();
+      daysUntilTue = mins <= 15 * 60 + 30 ? 0 : 7;
+    } else {
+      daysUntilTue = daysUntilTue || 7;
+    }
+    const expiry = new Date(ist.getTime() + daysUntilTue * 86400000);
+    return expiry.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   }
 
-  const expiry = new Date(ist.getTime() + daysUntilTue * 86400000);
-  // Return YYYY-MM-DD in IST
-  return expiry.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  // Monthly = last Tuesday of current month (BankNifty monthly expiry)
+  const year  = ist.getFullYear();
+  const month = ist.getMonth(); // 0-indexed
+
+  // Find last Tuesday of this month
+  const lastDay = new Date(year, month + 1, 0); // last calendar day of month
+  let lastTue = new Date(lastDay);
+  while (lastTue.getDay() !== 2) {
+    lastTue.setDate(lastTue.getDate() - 1);
+  }
+
+  // If today is past the monthly expiry (after 3:30 PM on expiry day, use next month)
+  const todayStr = ist.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const expiryStr = lastTue.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  if (todayStr > expiryStr) {
+    // Roll to next month
+    const nextMonth = month + 1;
+    const nextYear  = nextMonth > 11 ? year + 1 : year;
+    const nextMon   = nextMonth > 11 ? 0 : nextMonth;
+    const nextLastDay = new Date(nextYear, nextMon + 1, 0);
+    while (nextLastDay.getDay() !== 2) nextLastDay.setDate(nextLastDay.getDate() - 1);
+    return nextLastDay.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  }
+
+  return expiryStr;
 }
 
 function calcMaxPain(strikes) {
