@@ -133,6 +133,16 @@ export default function App() {
                   <Text style={styles.signalDirection(sig.signal)}>{sig.signal}</Text>
                   <Text style={styles.signalScore}>{sig.checklistScore}/7 Score</Text>
                 </View>
+
+                {sig.optionSuggestion?.contractName && (
+                  <View style={styles.contractContainer}>
+                    <Text style={styles.contractName}>{sig.optionSuggestion.contractName}</Text>
+                    {sig.optionSuggestion?.estimatedPremium && (
+                      <Text style={styles.premiumText}>Est. Premium: {sig.optionSuggestion.estimatedPremium}</Text>
+                    )}
+                  </View>
+                )}
+
                 <Text style={styles.signalReasoning}>{sig.reasoning}</Text>
                 
                 {sig.entry && (
@@ -211,5 +221,8 @@ const styles = StyleSheet.create({
   targetCol: { alignItems: 'center' },
   targetLabel: { color: '#8892B0', fontSize: 10, textTransform: 'uppercase', marginBottom: 6, fontWeight: '800' },
   targetValue: { color: '#FFF', fontSize: 16, fontWeight: '800' },
-  timestamp: { color: '#666', fontSize: 11, textAlign: 'right', fontWeight: '500' }
+  timestamp: { color: '#666', fontSize: 11, textAlign: 'right', fontWeight: '500' },
+  contractContainer: { backgroundColor: '#12141C', padding: 14, borderRadius: 10, marginBottom: 16, borderWidth: 1, borderColor: '#2A2E3D', borderLeftWidth: 3, borderLeftColor: '#FFF' },
+  contractName: { color: '#FFF', fontSize: 16, fontWeight: '900', letterSpacing: 1 },
+  premiumText: { color: '#00D84A', fontSize: 13, fontWeight: '700', marginTop: 4 }
 });

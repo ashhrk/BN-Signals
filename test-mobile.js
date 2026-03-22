@@ -29,9 +29,12 @@ setInterval(() => {
       stopLoss: 48500,
       timestamp: new Date().toISOString(),
       optionSuggestion: {
+        contractName: 'BANKNIFTY 53400 CE 31MAR26',
         type: 'CE',
-        strikePrice: 48500,
-        rationale: 'ATM Call for explosive directional momentum.'
+        strikePrice: 53400,
+        expiry: '31MAR26',
+        estimatedPremium: '₹150-180',
+        rationale: 'ATM Call for explosive directional momentum towards next resistance.'
       }
     }
   });

@@ -14,6 +14,12 @@ async function test() {
     stopLoss: 48400,
     rrRatio: "1:3",
     timeframe: "intraday (30-60 min)",
+    optionSuggestion: {
+      contractName: "BANKNIFTY 53400 CE 31MAR26",
+      estimatedPremium: "₹150-180",
+      strikePrice: 53400,
+      rationale: "1 ITM CE (53400) chosen for 88% confidence + strong momentum for higher delta."
+    },
     checklistScore: 7,
     checklist: {
       levelIdentifiedBefore: true,
