@@ -84,7 +84,7 @@ export class UpstoxClient {
   // ── Live WebSocket feed ──────────────────────────────────────────────────
   async connectLiveFeed(onPrice) {
     // Step 1: get a short-lived WebSocket auth URL from Upstox
-    const { data } = await axios.get(`${BASE_URL}/feed/market-data-feed/authorize`, {
+    const { data } = await axios.get(`https://api.upstox.com/v3/feed/market-data-feed/authorize`, {
       headers: this.headers,
     });
     const wsUrl = data.data.authorized_redirect_uri;

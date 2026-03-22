@@ -59,8 +59,8 @@ export function startDashboardServer(port = 3000) {
     ws.on('close', () => console.log('[Dashboard] Client disconnected'));
   });
 
-  server.listen(port, () => {
-    console.log(`[Dashboard] Running at http://localhost:${port}`);
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`[Dashboard] Running at http://0.0.0.0:${port}`);
   });
 
   return { broadcast };
