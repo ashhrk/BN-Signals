@@ -57,6 +57,11 @@ Respond ONLY with this exact JSON (no markdown, no extra text):
   "stopLoss": <price or null>,
   "rrRatio": "<e.g. 1:2.3>",
   "timeframe": "scalp (5-15 min)" | "intraday (30-60 min)" | "avoid",
+  "optionSuggestion": {
+    "type": "CE" | "PE" | null,
+    "strikePrice": <nearest 100 ATM or 1 OTM strike, e.g. 48500>,
+    "rationale": "<why this strike, e.g. ATM CE for momentum, 1 OTM PE for cost efficiency>"
+  },
   "checklist": {
     "levelIdentifiedBefore": true | false,
     "priceWithin05pctOfLevel": true | false,
@@ -75,7 +80,15 @@ Respond ONLY with this exact JSON (no markdown, no extra text):
     "volatility": "high" | "normal" | "low"
   }
 }
-IMPORTANT: Output BUY or SELL ONLY if checklistScore = 7. Any score < 7 = HOLD.`;
+IMPORTANT: Output BUY or SELL ONLY if checklistScore = 7. Any score < 7 = HOLD.
+
+OPTION SUGGESTION RULES:
+- For BUY signals: suggest CE (Call option). Strike = ATM (round current price to nearest 100).
+- For SELL signals: suggest PE (Put option). Strike = ATM (round current price to nearest 100).
+- If confidence > 80% and momentum is strong: suggest 1 strike ITM for higher delta.
+- If confidence 65-80%: suggest ATM for balanced risk.
+- For HOLD: set optionSuggestion to null.
+- Always explain the strike rationale in 1 sentence.`;
 
 export async function generateSignal(indicators, optionsData, currentPrice, levels, oiTrend, sessionState) {
   const userMessage = buildPrompt(indicators, optionsData, currentPrice, levels, oiTrend, sessionState);

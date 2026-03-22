@@ -37,6 +37,7 @@ export async function sendTelegramAlert(signal) {
     `📍 *Triggering Level:* ${signal.triggeringLevel ?? 'N/A'}`,
     `⏱ *Timeframe:* ${signal.timeframe}`,
     ``,
+    signal.optionSuggestion?.type ? `🎯 *Option:* ${signal.optionSuggestion.type} ${signal.optionSuggestion.strikePrice?.toLocaleString('en-IN')} (${signal.optionSuggestion.rationale})` : null,
     signal.entry    ? `📍 *Entry:*    ₹${fmt(signal.entry)}`    : null,
     signal.target   ? `🎯 *Target:*   ₹${fmt(signal.target)}`   : null,
     signal.stopLoss ? `🛑 *Stop Loss:* ₹${fmt(signal.stopLoss)}` : null,

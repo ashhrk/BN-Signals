@@ -84,7 +84,7 @@ export class UpstoxClient {
   // ── Live WebSocket feed ──────────────────────────────────────────────────
   async connectLiveFeed(onPrice) {
     // Step 1: get a short-lived WebSocket auth URL from Upstox
-    const { data } = await axios.get(`https://api.upstox.com/v3/feed/market-data-feed/authorize`, {
+    const { data } = await axios.get(`${BASE_URL}/feed/market-data-feed/authorize`, {
       headers: this.headers,
     });
     const wsUrl = data.data.authorized_redirect_uri;
@@ -134,12 +134,24 @@ export class UpstoxClient {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getNextExpiry() {
+  // BankNifty weekly expiry = every TUESDAY (day 2)
+  // NSE changed from Thursday to Tuesday in 2023
   const d = new Date();
-  // BankNifty expires every Wednesday; find the next one
-  const day = d.getDay(); // 0=Sun … 6=Sat
-  const daysUntilWed = (3 - day + 7) % 7 || 7;
-  const expiry = new Date(d.getTime() + daysUntilWed * 86400000);
-  return expiry.toISOString().split('T')[0];
+  const ist = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day = ist.getDay(); // 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
+
+  let daysUntilTue = (2 - day + 7) % 7;
+  if (day === 2) {
+    // today IS Tuesday: if market still open use today, otherwise next Tuesday
+    const mins = ist.getHours() * 60 + ist.getMinutes();
+    daysUntilTue = mins <= 15 * 60 + 30 ? 0 : 7;
+  } else {
+    daysUntilTue = daysUntilTue || 7;
+  }
+
+  const expiry = new Date(ist.getTime() + daysUntilTue * 86400000);
+  // Return YYYY-MM-DD in IST
+  return expiry.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 }
 
 function calcMaxPain(strikes) {
